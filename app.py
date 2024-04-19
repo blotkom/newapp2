@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, HTTPException
 from transformers import BertTokenizer, BertModel
 import torch
 import numpy as np
 
-app = Flask(__name__)
+app = FastAPI()
 
 # Initialize BERT model and tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -19,27 +19,15 @@ def text_to_embeddings(text):
     embeddings /= np.linalg.norm(embeddings)
     return embeddings.tolist()
 
-@app.route('/', methods=['POST', 'GET'])
-def generate_embeddings():
-    if request.method == 'POST':
-        # Get text input from the POST request
-        request_data = request.get_json()
-        text = request_data.get('text')
-
-        if text:
-            try:
-                # Generate BERT embeddings for the provided text
-                embeddings = text_to_embeddings(text)
-                # Return embeddings as JSON response
-                return jsonify({'embeddings': embeddings}), 200
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        else:
-            return jsonify({'error': 'Text not provided in the request.'}), 400
-    elif request.method == 'GET':
-        return "hhh u are s", 200
+@app.post("/")
+async def generate_embeddings(text: str):
+    if text:
+        try:
+            # Generate BERT embeddings for the provided text
+            embeddings = text_to_embeddings(text)
+            # Return embeddings as JSON response
+            return {'embeddings': embeddings}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
     else:
-        return jsonify({'error': 'Method not allowed.'}), 405
-
-if __name__ == "__main__":
-    app.run()
+        raise HTTPException(status_code=400, detail='Text not provided in the request.')
