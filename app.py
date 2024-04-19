@@ -1,4 +1,3 @@
-!pip install flask transformers torch
 from flask import Flask, request, jsonify
 from transformers import BertTokenizer, BertModel
 import torch
